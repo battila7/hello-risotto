@@ -1,21 +1,29 @@
 package io.risotto.example.hello.persistence;
 
-import static io.risotto.binding.BasicBinding.bind;
-
 import io.risotto.Container;
+import io.risotto.annotations.BindingSupplier;
+import io.risotto.annotations.Named;
+import io.risotto.annotations.WithScope;
+import io.risotto.binding.scope.PrivateScope;
+import io.risotto.binding.scope.ProtectedScope;
 
 public final class PersistenceContainer extends Container {
-  @Override
-  protected void configure() {
-    // Only GreetingSupplier is visible
-    addBinding(
-        bind(GreetingSupplier.class).toClass(RandomGreetingSupplier.class).protectedScope());
+  @BindingSupplier
+  @WithScope(ProtectedScope.class)
+  public GreetingSupplier greetingSupplier(GreetingLoader greetingLoader) {
+    return new RandomGreetingSupplier(greetingLoader);
+  }
 
-    addBinding(bind(GreetingLoader.class).toClass(FileGreetingLoader.class).privateScope());
+  @BindingSupplier
+  @WithScope(PrivateScope.class)
+  public GreetingLoader greetingLoader(@Named("messagePath") String messagePath) {
+    return new FileGreetingLoader(messagePath);
+  }
 
-    // There can be multiple bindings using String.class and we must differentiate between them.
-    // Here we use a named binding using the name "messagePath". Injection of a specific named
-    // binding can be requested using the @Named annotation.
-    addBinding(bind(String.class).as("messagePath").toInstance("messages.txt").privateScope());
+  @BindingSupplier
+  @Named("messagePath")
+  @WithScope(PrivateScope.class)
+  public String messagePath() {
+    return "messages.txt";
   }
 }
